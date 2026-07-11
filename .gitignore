@@ -1,0 +1,29 @@
+# macOS
+.DS_Store
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Secretos y credenciales — NUNCA commitear
+.env
+.env.*
+*.p8
+*.p12
+*.mobileprovision
+*.certSigningRequest
+
+# Claude Code — config personal local (la compartida sí se commitea)
+.claude/settings.local.json
+
+# Spec Kit / misc
+.specify/scripts/__pycache__/

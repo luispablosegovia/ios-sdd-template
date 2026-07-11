@@ -1,0 +1,21 @@
+excluded:
+  - .build
+  - DerivedData
+
+opt_in_rules:
+  - empty_count
+  - force_unwrapping        # la constitución los prohíbe fuera de tests
+  - implicitly_unwrapped_optional
+  - sorted_first_last
+  - toggle_bool
+
+line_length:
+  warning: 120
+  error: 160
+  ignores_comments: true
+
+identifier_name:
+  min_length: 2
+
+force_unwrapping:
+  severity: error

@@ -1,0 +1,11 @@
+# Ajustá --swiftversion a la versión que reporte: swift --version
+--swiftversion 6.2
+--indent 4
+--maxwidth 120
+--wraparguments before-first
+--wrapcollections before-first
+--stripunusedargs closure-only
+--self remove
+--importgrouping testable-bottom
+--enable isEmpty
+--exclude .build, DerivedData
