@@ -31,9 +31,11 @@ xcodebuild -scheme __APP_NAME__ -destination 'platform=iOS Simulator,name=iPhone
 xcodebuild -scheme __APP_NAME__ -destination 'platform=iOS Simulator,name=iPhone 17' test 2>&1 | xcbeautify
 
 # Single test (Swift Testing): prefer running via the XcodeBuildMCP test tools
-# Lint / format (hooks already run these on every edited file)
-swiftlint lint --quiet
-swiftformat . --lint
+# Verify all trust gates before review/commit
+bash scripts/verify.sh
+
+# Install local git safety hooks
+bash scripts/install-git-hooks.sh
 ```
 
 Prefer the **XcodeBuildMCP tools** (build, run tests, boot simulator, capture
@@ -58,11 +60,12 @@ the newest iPhone.
 - Specs live in `specs/NNN-feature-name/` (spec.md, plan.md, tasks.md) — managed by Spec Kit.
 - The spec is the source of truth. If reality diverges, update the spec first.
 - Flow per feature: `/speckit.specify` → `/speckit.clarify` → `/speckit.plan` →
-  `/speckit.tasks` → `/speckit.implement` → `/review`.
+  `/speckit.tasks` → `/speckit.implement` → `/verify` → `/review` → `/trust-report`.
 - Planning/spec phases: use the `planner` agent (Opus). Implementation: `implementer`
-  agent (Sonnet), ONE task at a time. After each task: `/review` (reviewer agent, Opus).
-- **TDD**: every task starts with a failing test. No task is done until the full
-  suite passes and lint is clean.
+  agent (Sonnet), ONE task at a time. After each task: `/verify` (objective gates),
+  then `/review` (reviewer agent, Opus), then `/trust-report` for human approval.
+- **TDD**: every task starts with a failing test. No task is done until RED/GREEN
+  evidence exists, the full suite passes, `scripts/verify.sh` passes, and lint is clean.
 
 ## Style rules
 

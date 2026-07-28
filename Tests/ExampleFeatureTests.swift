@@ -3,37 +3,38 @@
 // Borralo cuando tengas tests reales. Patrón: un @Suite por tipo bajo prueba.
 
 import Testing
+
 // @testable import __APP_NAME__   ← descomentá con el nombre real de tu app
 
-@Suite("Ejemplo — patrones de Swift Testing")
 struct ExampleFeatureTests {
-
-    @Test("Los strings vacíos se detectan bien")
-    func emptyStringDetection() {
+    @Test
+    func `empty strings are detected`() {
         let input = ""
         #expect(input.isEmpty)
     }
 
-    @Test("Suma básica", arguments: [(1, 2, 3), (5, 5, 10), (-1, 1, 0)])
-    func addition(a: Int, b: Int, expected: Int) {
+    @Test(arguments: [(1, 2, 3), (5, 5, 10), (-1, 1, 0)])
+    func `basic addition`(leftValue: Int, rightValue: Int, expected: Int) {
         // Tests parametrizados: un caso por tupla, fallan individualmente.
-        #expect(a + b == expected)
+        #expect(leftValue + rightValue == expected)
     }
 
-    @Test("Los errores esperados se lanzan")
-    func throwsExpectedError() {
+    @Test
+    func `expected errors are thrown`() {
         #expect(throws: DecodingError.self) {
             _ = try JSONDecoder().decode(Int.self, from: Data("no-json".utf8))
         }
     }
 
-    @Test("Async/await funciona directo en tests")
-    func asyncWork() async throws {
+    @Test
+    func `async await works directly in tests`() async {
         let value = await computeSomething()
         #expect(value > 0)
         // #require desempaca o aborta el test:
         // let user = try #require(await session.currentUser)
     }
 
-    private func computeSomething() async -> Int { 42 }
+    private func computeSomething() async -> Int {
+        42
+    }
 }

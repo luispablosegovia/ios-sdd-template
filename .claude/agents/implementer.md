@@ -35,5 +35,15 @@ time from the approved task list — nothing more, nothing less.
   report the conflict instead of improvising.
 
 ## When you finish
-Summarize: task completed, files touched, tests added (names), full-suite
-result, and anything the reviewer should look at closely.
+Summarize with objective evidence. Include:
+
+- task completed;
+- files touched;
+- tests added (names);
+- RED command and observed expected failure;
+- GREEN command and observed pass;
+- full-suite command and result;
+- `bash scripts/verify.sh` result, or explain why it could not run;
+- anything the verifier/reviewer should inspect closely.
+
+If you cannot show RED output for a behavior change, the task is not complete.

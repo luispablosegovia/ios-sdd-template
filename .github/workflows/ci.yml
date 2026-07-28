@@ -1,6 +1,5 @@
-# CI mínimo: build + tests + lint en cada push/PR.
-# Nota: elegí la imagen de runner que traiga el Xcode que usás
-# (ver github.com/actions/runner-images). El simulador se detecta solo.
+# CI: canonical verification gate for instantiated iOS projects.
+# In the template repository itself, xcodebuild is skipped because there is no .xcodeproj yet.
 name: CI
 
 on:
@@ -9,7 +8,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  verify:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,22 +17,9 @@ jobs:
         run: sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
 
       - name: Install tools
-        run: brew install xcbeautify swiftlint || true
+        run: brew install xcbeautify swiftlint swiftformat || true
 
-      - name: Pick a simulator
-        id: sim
+      - name: Run verification gate
         run: |
-          DEVICE=$(xcrun simctl list devices available | grep -oE 'iPhone [^(]+' | head -1 | xargs)
-          echo "device=$DEVICE" >> "$GITHUB_OUTPUT"
-          echo "Usando simulador: $DEVICE"
-
-      - name: Build & test
-        run: |
-          set -o pipefail
-          xcodebuild \
-            -scheme "__APP_NAME__" \
-            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.device }}" \
-            test 2>&1 | xcbeautify
-
-      - name: SwiftLint
-        run: swiftlint lint --strict
+          chmod +x scripts/verify.sh
+          bash scripts/verify.sh

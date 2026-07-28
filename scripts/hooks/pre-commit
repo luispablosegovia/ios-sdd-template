@@ -1,0 +1,31 @@
+#!/bin/bash
+# pre-commit — safety gate for AI-assisted iOS projects.
+
+set -euo pipefail
+
+STAGED=$(git diff --cached --name-only)
+
+if printf '%s\n' "$STAGED" | grep -Eq '(^|/)project\.pbxproj$|\.xcodeproj/'; then
+  echo "❌ Refusing to commit Xcode project file changes."
+  echo "   This template assumes Xcode buildable folders. Add/move files on disk instead."
+  echo "   If a project-file change is truly necessary, review it manually and bypass with:"
+  echo "   git commit --no-verify"
+  exit 1
+fi
+
+SECRET_PATTERN="^\\+.*(api[_-]?key|secret|password|passwd|token|client[_-]?secret)[[:space:]]*[:=][[:space:]]*.{8,}"
+if git diff --cached --unified=0 | grep -Ei "$SECRET_PATTERN" >/tmp/precommit-secret-scan.txt 2>/dev/null; then
+  echo "❌ Possible hardcoded secret in staged changes:"
+  sed -n '1,20p' /tmp/precommit-secret-scan.txt
+  exit 1
+fi
+
+if git diff --cached --check --quiet; then
+  :
+else
+  echo "❌ Whitespace errors in staged diff."
+  git diff --cached --check
+  exit 1
+fi
+
+exit 0

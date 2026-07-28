@@ -44,7 +44,7 @@ cp "$TEMPLATE_DIR/.swiftlint.yml" "$TARGET_DIR/"
 [ -f "$TARGET_DIR/.gitignore" ] || cp "$TEMPLATE_DIR/.gitignore" "$TARGET_DIR/"
 
 echo "→ Reemplazando __APP_NAME__ por '$APP_NAME' ..."
-for f in "$TARGET_DIR/CLAUDE.md" "$TARGET_DIR/.specify/memory/constitution.md" "$TARGET_DIR/.github/workflows/ci.yml"; do
+for f in "$TARGET_DIR/CLAUDE.md" "$TARGET_DIR/.specify/memory/constitution.md" "$TARGET_DIR/.github/workflows/ci.yml" "$TARGET_DIR/scripts/verify.sh"; do
   [ -f "$f" ] && sed -i '' "s/__APP_NAME__/$APP_NAME/g" "$f"
 done
 
@@ -79,6 +79,13 @@ if command -v specify >/dev/null 2>&1; then
     || echo "⚠  'specify init' falló — corrélo a mano: specify init . --force --integration claude"
 else
   echo "⚠  Spec Kit no instalado. Corré scripts/bootstrap.sh primero."
+fi
+
+# Git hooks de seguridad local
+if [ -d "$TARGET_DIR/.git" ]; then
+  echo "→ Instalando git hooks locales ..."
+  (cd "$TARGET_DIR" && bash scripts/install-git-hooks.sh) \
+    || echo "⚠  No pude instalar hooks — corré: bash scripts/install-git-hooks.sh"
 fi
 
 cat << EOF

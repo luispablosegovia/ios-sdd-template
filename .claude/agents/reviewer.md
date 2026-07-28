@@ -38,3 +38,23 @@ Then findings grouped by severity (Blocker / Should fix / Nit), each with
 file:line, why it matters, and a concrete suggestion. Quote the spec or
 constitution clause when citing a violation. Be direct — praise briefly,
 critique specifically. End with: test suite result, lint result.
+
+Then append a machine-readable JSON block:
+
+```json
+{
+  "passed": false,
+  "risk_level": "low|medium|high",
+  "security_concerns": [],
+  "logic_errors": [],
+  "missing_tests": [],
+  "architecture_violations": [],
+  "verification_commands_run": [],
+  "human_review_required": true,
+  "summary": "one sentence verdict"
+}
+```
+
+Fail closed: security concerns, logic errors, missing critical tests, architecture
+violations, unrun required verification commands, or inability to parse the diff
+must set `passed` to `false`.
