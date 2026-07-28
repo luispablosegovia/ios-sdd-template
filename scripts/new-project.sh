@@ -44,8 +44,9 @@ cp "$TEMPLATE_DIR/.swiftlint.yml" "$TARGET_DIR/"
 [ -f "$TARGET_DIR/.gitignore" ] || cp "$TEMPLATE_DIR/.gitignore" "$TARGET_DIR/"
 
 echo "→ Reemplazando __APP_NAME__ por '$APP_NAME' ..."
+APP_NAME_ESCAPED=$(printf '%s' "$APP_NAME" | sed 's/[\\&/]/\\&/g')
 for f in "$TARGET_DIR/CLAUDE.md" "$TARGET_DIR/.specify/memory/constitution.md" "$TARGET_DIR/.github/workflows/ci.yml" "$TARGET_DIR/scripts/verify.sh"; do
-  [ -f "$f" ] && sed -i '' "s/__APP_NAME__/$APP_NAME/g" "$f"
+  [ -f "$f" ] && sed -i '' "s/__APP_NAME__/$APP_NAME_ESCAPED/g" "$f"
 done
 
 # Layout de código fuente dentro del target (buildable folders)
