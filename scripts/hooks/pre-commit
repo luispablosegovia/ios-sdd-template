@@ -5,26 +5,43 @@ set -euo pipefail
 
 STAGED=$(git diff --cached --name-only)
 
-if printf '%s\n' "$STAGED" | grep -Eq '(^|/)project\.pbxproj$|\.xcodeproj/'; then
-  echo "❌ Refusing to commit Xcode project file changes."
-  echo "   This template assumes Xcode buildable folders. Add/move files on disk instead."
-  echo "   If a project-file change is truly necessary, review it manually and bypass with:"
-  echo "   git commit --no-verify"
-  exit 1
+XCODEPROJ_TOUCHES=$(printf '%s\n' "$STAGED" | grep -E '(^|/)project\.pbxproj$|\.xcodeproj/' || true)
+ADR_TOUCHES=$(printf '%s\n' "$STAGED" | grep -E '^docs/decisions/[0-9]{4}-.+\.md$' || true)
+if [ -n "$XCODEPROJ_TOUCHES" ]; then
+  if [ "${ALLOW_XCODEPROJ_CHANGE:-0}" = "1" ] && [ -n "$ADR_TOUCHES" ]; then
+    echo "⚠️  Xcode project file changes allowed with ADR coverage and ALLOW_XCODEPROJ_CHANGE=1."
+  else
+    echo "❌ Refusing to commit Xcode project file changes."
+    echo "   This template assumes Xcode buildable folders for routine file additions."
+    echo "   If a project-file change is truly necessary, add a numbered ADR in docs/decisions/"
+    echo "   and commit with: ALLOW_XCODEPROJ_CHANGE=1 git commit"
+    exit 1
+  fi
 fi
 
-SECRET_PATTERN="^\\+.*(api[_-]?key|secret|password|passwd|token|client[_-]?secret)[[:space:]]*[:=][[:space:]]*.{8,}"
-if git diff --cached --unified=0 | grep -Ei "$SECRET_PATTERN" >/tmp/precommit-secret-scan.txt 2>/dev/null; then
+SECRET_SCAN_FILE=$(mktemp "${TMPDIR:-/tmp}/precommit-secret-scan.XXXXXX")
+trap 'rm -f "$SECRET_SCAN_FILE"' EXIT
+if command -v gitleaks >/dev/null 2>&1; then
+  if ! gitleaks protect --staged --redact --no-banner --exit-code 1 >"$SECRET_SCAN_FILE" 2>&1; then
+    echo "❌ Gitleaks found possible secrets in staged changes:"
+    sed -n '1,80p' "$SECRET_SCAN_FILE"
+    exit 1
+  fi
+fi
+SECRET_PATTERN="^\\+.*(api[_-]?key|secret|password|passwd|token|client[_-]?secret)[[:space:]]*[:=][[:space:]]*['\"]?[^'\"[:space:]]{8,}"
+if git diff --cached --unified=0 | grep -Ei "$SECRET_PATTERN" >"$SECRET_SCAN_FILE" 2>/dev/null; then
   echo "❌ Possible hardcoded secret in staged changes:"
-  sed -n '1,20p' /tmp/precommit-secret-scan.txt
+  sed -n '1,20p' "$SECRET_SCAN_FILE"
   exit 1
 fi
 
-if git diff --cached --check --quiet; then
+WHITESPACE_SCAN_FILE=$(mktemp "${TMPDIR:-/tmp}/precommit-whitespace.XXXXXX")
+trap 'rm -f "$SECRET_SCAN_FILE" "$WHITESPACE_SCAN_FILE"' EXIT
+if git diff --cached --check >"$WHITESPACE_SCAN_FILE"; then
   :
 else
   echo "❌ Whitespace errors in staged diff."
-  git diff --cached --check
+  sed -n '1,80p' "$WHITESPACE_SCAN_FILE"
   exit 1
 fi
 

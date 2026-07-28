@@ -33,7 +33,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_input.file_path // empty' | { read fp; case \"$fp\" in *.pbxproj|*.xcodeproj/*) echo 'Blocked: never edit the Xcode project file directly. This project uses buildable folders — create/move files on disk instead.' >&2; exit 2;; *) exit 0;; esac; }"
+            "command": "jq -r '.tool_input.file_path // empty' | { read fp; case \"$fp\" in *.pbxproj|*.xcodeproj/*) echo 'Blocked: never edit the Xcode project file directly for routine file additions. If a project setting/capability truly requires it, write a numbered ADR and ask the user to rerun with ALLOW_XCODEPROJ_CHANGE=1.' >&2; exit 2;; *) exit 0;; esac; }"
           }
         ]
       }

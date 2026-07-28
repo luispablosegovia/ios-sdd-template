@@ -53,7 +53,7 @@ the newest iPhone.
 - `Core/Networking/` — async/await HTTP client. `Core/Persistence/` — SwiftData models.
 - Tests mirror `Features/` structure in the test target.
 - This project uses **Xcode buildable folders**: creating a file on disk adds it to
-  the project automatically. **NEVER edit `project.pbxproj` directly** (a hook blocks it).
+  the project automatically. **NEVER edit `project.pbxproj` directly for routine file additions**. If a capability/target/build setting truly requires `.xcodeproj` changes, add a numbered ADR and require human review.
 
 ## Workflow (Spec Driven Development)
 
@@ -66,6 +66,8 @@ the newest iPhone.
   then `/review` (reviewer agent, Opus), then `/trust-report` for human approval.
 - **TDD**: every task starts with a failing test. No task is done until RED/GREEN
   evidence exists, the full suite passes, `scripts/verify.sh` passes, and lint is clean.
+- For medium/high-risk tasks, persist the audit trail in
+  `specs/<NNN-feature>/evidence/<task-id>.md` using `specs/evidence/README.md`.
 
 ## Style rules
 

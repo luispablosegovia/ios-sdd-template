@@ -41,7 +41,7 @@ else
 fi
 
 # ── 3. Herramientas CLI ─────────────────────────────────────────────────────
-TOOLS=(swiftformat swiftlint xcbeautify jq gh node uv)
+TOOLS=(swiftformat swiftlint xcbeautify jq gh node uv gitleaks)
 for t in "${TOOLS[@]}"; do
   if command -v "$t" >/dev/null 2>&1; then
     ok "$t"
