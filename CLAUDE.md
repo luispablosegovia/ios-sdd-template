@@ -60,7 +60,7 @@ the newest iPhone.
 - Specs live in `specs/NNN-feature-name/` (spec.md, plan.md, tasks.md) — managed by Spec Kit.
 - The spec is the source of truth. If reality diverges, update the spec first.
 - Flow per feature: `/speckit.specify` → `/speckit.clarify` → `/speckit.plan` →
-  `/speckit.tasks` → `/speckit.implement` → `/verify` → `/review` → `/trust-report`.
+  `/speckit.tasks` → `/implement-next specs/<NNN-feature>` → `/verify` → `/review` → `/trust-report`.
 - Planning/spec phases: use the `planner` agent (Opus). Implementation: `implementer`
   agent (Sonnet), ONE task at a time. After each task: `/verify` (objective gates),
   then `/review` (reviewer agent, Opus), then `/trust-report` for human approval.

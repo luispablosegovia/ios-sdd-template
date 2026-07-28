@@ -20,6 +20,7 @@ bash "$ROOT/scripts/new-project.sh" "$APP_DIR" "$APP_NAME"
 required=(
   "CLAUDE.md"
   ".claude/settings.json"
+  ".claude/commands/implement-next.md"
   ".specify/memory/constitution.md"
   "docs/ai-code-trust-pipeline.md"
   "scripts/verify.sh"

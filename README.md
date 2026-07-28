@@ -37,6 +37,7 @@ tu-proyecto/                      ← raíz del repo (al lado del .xcodeproj)
 │   │   ├── verifier.md           ← Sonnet · corre gates objetivos, no edita código
 │   │   └── reviewer.md           ← Opus · review read-only con contexto limpio
 │   └── commands/
+│       ├── implement-next.md     ← /implement-next → implementa UNA tarea con TDD
 │       ├── review.md             ← /review → dispara el reviewer sobre el diff
 │       ├── verify.md             ← /verify → corre scripts/verify.sh con evidencia
 │       ├── trust-report.md       ← /trust-report → resumen de riesgo/evidencia
@@ -138,14 +139,15 @@ claude --model opusplan        # Opus planifica, Sonnet ejecuta
 /speckit.plan                  # plan técnico (frameworks, arquitectura)
 /speckit.tasks                 # desglose en tareas chicas y verificables
 
-# Implementación: pedile UNA tarea por vez, no toda la feature:
-Implementá sólo la próxima tarea no marcada de specs/<NNN-feature>/tasks.md.
-Aplicá TDD estricto: RED → GREEN → full suite. No amplíes scope.
+# 6. Implementá UNA tarea por vez, con TDD estricto:
+/implement-next specs/001-onboarding
 
-/verify                       # corre gates objetivos y captura evidencia
-/review                       # Opus revisa el diff con ojos frescos
-/trust-report                 # resumen final de riesgo/evidencia para decidir
-# → arreglás lo que marque el review, commit, y siguiente feature
+# 7. Cerrá esa tarea antes de pasar a la siguiente:
+/verify 001-onboarding T001
+/review 001-onboarding T001
+/trust-report 001-onboarding T001
+
+# 8. Si todo está verde, commit chico y repetís /implement-next para T002
 ```
 
 ### El layout de código fuente
@@ -178,26 +180,23 @@ referencia de Swift Testing.
 ---
 
 
-## Cerrar una feature y empezar la siguiente
+## Roadmap claro: de feature en feature
 
-No mezcles dos features en el mismo diff. Cerrá una primero:
+Usá este mini-roadmap cada vez que quieras avanzar el producto. La regla base es:
+**una feature se especifica completa, pero se implementa tarea por tarea**.
+
+### 0. Elegí la próxima feature
+
+Ejemplo simple de roadmap de producto:
 
 ```text
-# Dentro de Claude Code
-/verify 001-onboarding
-/review 001-onboarding
-/trust-report 001-onboarding
+001-onboarding
+002-default-units
+003-calculation-history
+004-export-results
 ```
 
-```bash
-# Si el reporte está completo y todo está verde
-git status
-git add .
-git commit -m "feat(onboarding): complete welcome flow"
-git push
-```
-
-Recién entonces abrí la siguiente feature; no implementes todavía:
+### 1. Abrí la feature con Spec Kit — todavía no implementes
 
 ```text
 /speckit.specify Quiero que el usuario pueda elegir una unidad por defecto.
@@ -206,17 +205,79 @@ Recién entonces abrí la siguiente feature; no implementes todavía:
 /speckit.tasks
 ```
 
-**Regla:** una feature nueva empieza con spec. Una feature terminada deja tests
-verdes, review resuelto y un commit pequeño. Si aparece trabajo extra durante la
-implementación, anotalo como próxima feature/tarea; no lo mezcles en el mismo diff.
+Resultado esperado:
+
+```text
+specs/002-default-units/spec.md
+specs/002-default-units/plan.md
+specs/002-default-units/tasks.md
+```
+
+### 2. Implementá sólo la próxima tarea
+
+```text
+/implement-next specs/002-default-units
+```
+
+Ese comando debe elegir la próxima tarea no marcada en `tasks.md` y ejecutar sólo
+esa tarea con TDD estricto:
+
+```text
+RED test → mínimo código GREEN → full suite → bash scripts/verify.sh
+```
+
+Si querés forzar una tarea específica:
+
+```text
+/implement-next specs/002-default-units T003
+```
+
+### 3. Cerrá la tarea con evidencia y review
+
+```text
+/verify 002-default-units T003
+/review 002-default-units T003
+/trust-report 002-default-units T003
+```
 
 Para cambios medium/high risk, guardá evidencia auditable en:
 
 ```text
-specs/<NNN-feature>/evidence/<task-id>.md
+specs/002-default-units/evidence/T003.md
 ```
 
 Ver `specs/evidence/README.md`.
+
+### 4. Commit chico cuando la tarea está verde
+
+```bash
+git status
+git add .
+git commit -m "feat(default-units): add default unit selection model"
+```
+
+Después repetís:
+
+```text
+/implement-next specs/002-default-units
+```
+
+hasta completar todas las tareas de esa feature.
+
+### 5. Cerrá la feature antes de abrir otra
+
+```text
+/verify 002-default-units final
+/review 002-default-units final
+/trust-report 002-default-units final
+```
+
+```bash
+git push
+```
+
+**No mezcles features:** si aparece trabajo extra durante la implementación,
+anotalo como próxima feature/tarea; no lo metas en el mismo diff.
 
 ---
 
