@@ -12,14 +12,19 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Select newest Xcode on the runner
         run: sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
 
       - name: Install tools
-        run: brew install xcbeautify swiftlint swiftformat || true
+        run: brew install xcbeautify swiftlint swiftformat
 
       - name: Run verification gate
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
+          STRICT_VERIFY: 1
         run: |
           chmod +x scripts/verify.sh
           bash scripts/verify.sh
