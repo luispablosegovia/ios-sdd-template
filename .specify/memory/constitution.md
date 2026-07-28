@@ -50,10 +50,27 @@ Collect the minimum data needed. No third-party tracking. Any data leaving the
 device must be listed in the spec and justified. Secrets never live in the
 repo or in code.
 
+### VII. AI-Generated Code Trust Gates (NON-NEGOTIABLE)
+
+AI-generated code is not accepted because it looks plausible. It must pass
+objective verification. Every completed implementation task must produce: RED
+command and expected failure output, GREEN command and passing output, full-suite
+result, lint/format result, `scripts/verify.sh` result, fresh-context reviewer
+verdict, and a short trust report. Missing evidence means the task is incomplete.
+
+High-risk changes require explicit human review of the spec, critical tests, and
+selected diff: security/privacy, networking/sync/export, permissions, payments,
+Keychain/secrets/authentication, user-data deletion, SwiftData migrations, new
+third-party dependencies, broad architecture changes, concurrency architecture,
+and critical engineering formulas.
+
 ## Quality Gates
 
-Before any merge: `xcodebuild test` green, SwiftLint clean, `/review` (reviewer
-agent) findings addressed, spec acceptance criteria checked off.
+Before any merge: `bash scripts/verify.sh` green or green-with-explained-template
+warnings, `xcodebuild test` green when an Xcode project is present, SwiftLint and
+SwiftFormat clean, `/verify` evidence captured, `/review` (reviewer agent)
+findings addressed, `/trust-report` generated, spec acceptance criteria checked
+off.
 
 ## Governance
 

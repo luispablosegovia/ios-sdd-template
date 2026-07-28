@@ -7,6 +7,7 @@ del ecosistema Apple (Swift 6, SwiftUI, SwiftData, Swift Testing) y un pipeline 
 |------|--------|-------|
 | Especificar / Clarificar / Planificar | **Opus** (el más potente) | Subagente `planner` o `/model opus` |
 | Implementar tarea por tarea | **Sonnet** (rápido y preciso) | Subagente `implementer` o `/model sonnet` |
+| Verificación objetiva | **Sonnet** | Subagente `verifier` |
 | Review de cada tarea / pre-merge | **Opus** con contexto limpio | Subagente `reviewer` |
 
 > 💡 **Atajo:** Claude Code tiene el alias de modelo `opusplan`: usa Opus mientras estás en
@@ -33,9 +34,12 @@ tu-proyecto/                      ← raíz del repo (al lado del .xcodeproj)
 │   ├── agents/
 │   │   ├── planner.md            ← Opus · especifica y planifica, NO escribe código
 │   │   ├── implementer.md        ← Sonnet · implementa UNA tarea por vez con TDD
+│   │   ├── verifier.md           ← Sonnet · corre gates objetivos, no edita código
 │   │   └── reviewer.md           ← Opus · review read-only con contexto limpio
 │   └── commands/
 │       ├── review.md             ← /review → dispara el reviewer sobre el diff
+│       ├── verify.md             ← /verify → corre scripts/verify.sh con evidencia
+│       ├── trust-report.md       ← /trust-report → resumen de riesgo/evidencia
 │       └── test.md               ← /test → corre la suite completa
 ├── .specify/
 │   └── memory/
@@ -43,6 +47,8 @@ tu-proyecto/                      ← raíz del repo (al lado del .xcodeproj)
 ├── specs/                        ← acá viven los specs por feature (los crea Spec Kit)
 ├── docs/
 │   ├── architecture.md           ← arquitectura viva del proyecto
+│   ├── ai-code-trust-pipeline.md ← política de evidencia para código generado por IA
+│   ├── engineering-verification.md ← verificación independiente de fórmulas técnicas
 │   └── decisions/                ← ADRs (registro de decisiones)
 ├── SourceTemplate/               ← layout sugerido para COPIAR dentro del target de Xcode
 │   ├── App/                      ← entry point, configuración global
@@ -52,7 +58,9 @@ tu-proyecto/                      ← raíz del repo (al lado del .xcodeproj)
 ├── Tests/ExampleFeatureTests.swift  ← ejemplo con Swift Testing (@Test, #expect)
 ├── scripts/
 │   ├── bootstrap.sh              ← setup one-time de la Mac
-│   └── new-project.sh            ← instancia este template en un proyecto Xcode nuevo
+│   ├── new-project.sh            ← instancia este template en un proyecto Xcode nuevo
+│   ├── verify.sh                 ← gate local/CI para confiar en código generado por IA
+│   └── install-git-hooks.sh      ← instala hooks locales de seguridad
 ├── .swiftformat / .swiftlint.yml ← estilo consistente (los hooks los corren solos)
 ├── .github/workflows/ci.yml      ← build + tests en cada push
 └── .gitignore
@@ -89,7 +97,13 @@ Los hooks corren SIEMPRE, sin depender de que el modelo se acuerde:
 - **permissions**: pre-aprueba comandos seguros (xcodebuild, swift, git status…) para que
   no te pida confirmación a cada rato.
 
-### 5. `specs/` — el corazón del SDD
+### 5. `docs/ai-code-trust-pipeline.md` — cómo confiar sin leer cada línea
+Define la política de evidencia para código generado por IA: cambio chico, RED/GREEN real,
+`/verify`, `/review`, `/trust-report`, clasificación de riesgo y cuándo sí hace falta revisión
+humana. Para apps de ingeniería, `docs/engineering-verification.md` agrega reglas específicas
+para fórmulas críticas y ejemplos numéricos independientes.
+
+### 6. `specs/` — el corazón del SDD
 Cada feature vive en `specs/NNN-nombre/` con su `spec.md`, `plan.md` y `tasks.md`
 (los genera Spec Kit). **El spec es la fuente de verdad, no el chat.** Si algo cambia,
 se cambia el spec primero.
@@ -124,7 +138,9 @@ claude --model opusplan        # Opus planifica, Sonnet ejecuta
 /speckit.plan                  # plan técnico (frameworks, arquitectura)
 /speckit.tasks                 # desglose en tareas chicas y verificables
 /speckit.implement             # Sonnet implementa tarea por tarea (TDD)
-/review                        # Opus revisa el diff con ojos frescos
+/verify                       # corre gates objetivos y captura evidencia
+/review                       # Opus revisa el diff con ojos frescos
+/trust-report                 # resumen final de riesgo/evidencia para decidir
 # → arreglás lo que marque el review, commit, y siguiente feature
 ```
 

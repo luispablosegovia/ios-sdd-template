@@ -11,6 +11,8 @@
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(git add:*)",
+      "Bash(bash scripts/verify.sh:*)",
+      "Bash(bash scripts/install-git-hooks.sh:*)",
       "Bash(ls:*)",
       "Bash(mkdir:*)"
     ],
