@@ -137,7 +137,11 @@ claude --model opusplan        # Opus planifica, Sonnet ejecuta
 /speckit.clarify               # Opus te hace las preguntas que faltan
 /speckit.plan                  # plan técnico (frameworks, arquitectura)
 /speckit.tasks                 # desglose en tareas chicas y verificables
-/speckit.implement             # Sonnet implementa tarea por tarea (TDD)
+
+# Implementación: pedile UNA tarea por vez, no toda la feature:
+Implementá sólo la próxima tarea no marcada de specs/<NNN-feature>/tasks.md.
+Aplicá TDD estricto: RED → GREEN → full suite. No amplíes scope.
+
 /verify                       # corre gates objetivos y captura evidencia
 /review                       # Opus revisa el diff con ojos frescos
 /trust-report                 # resumen final de riesgo/evidencia para decidir
@@ -170,6 +174,49 @@ MiApp/                        ← carpeta del target
 Los tests van en los targets que Xcode ya creó (`MiAppTests/`, `MiAppUITests/`),
 espejando la estructura de `Features/`. Mirá `Tests/ExampleFeatureTests.swift` como
 referencia de Swift Testing.
+
+---
+
+
+## Cerrar una feature y empezar la siguiente
+
+No mezcles dos features en el mismo diff. Cerrá una primero:
+
+```text
+# Dentro de Claude Code
+/verify 001-onboarding
+/review 001-onboarding
+/trust-report 001-onboarding
+```
+
+```bash
+# Si el reporte está completo y todo está verde
+git status
+git add .
+git commit -m "feat(onboarding): complete welcome flow"
+git push
+```
+
+Recién entonces abrí la siguiente feature; no implementes todavía:
+
+```text
+/speckit.specify Quiero que el usuario pueda elegir una unidad por defecto.
+/speckit.clarify
+/speckit.plan
+/speckit.tasks
+```
+
+**Regla:** una feature nueva empieza con spec. Una feature terminada deja tests
+verdes, review resuelto y un commit pequeño. Si aparece trabajo extra durante la
+implementación, anotalo como próxima feature/tarea; no lo mezcles en el mismo diff.
+
+Para cambios medium/high risk, guardá evidencia auditable en:
+
+```text
+specs/<NNN-feature>/evidence/<task-id>.md
+```
+
+Ver `specs/evidence/README.md`.
 
 ---
 

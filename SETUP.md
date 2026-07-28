@@ -45,7 +45,7 @@ brew --version
 ## Paso 3 — Herramientas de línea de comandos
 
 ```bash
-brew install swiftformat swiftlint xcbeautify jq gh node uv
+brew install swiftformat swiftlint xcbeautify jq gh node uv gitleaks
 ```
 
 Qué es cada una:
@@ -53,6 +53,7 @@ Qué es cada una:
 - **xcbeautify** → hace legible la salida de `xcodebuild` (clave para que los agentes
   no se ahoguen en logs).
 - **jq** → parsear JSON en los hooks.
+- **gitleaks** → escaneo local de secretos en hooks y `scripts/verify.sh`.
 - **gh** → GitHub CLI (para que Claude pueda crear PRs). Después: `gh auth login`.
 - **node** → necesario para `npx` (así se instalan los MCPs).
 - **uv** → gestor de Python moderno, es como se instala Spec Kit.

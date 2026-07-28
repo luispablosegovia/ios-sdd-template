@@ -37,6 +37,8 @@ by deterministic tools, and reviewed from a fresh context.
 
 If evidence is missing, the task is incomplete even if the code looks correct.
 
+For medium/high-risk work, persist this evidence in `specs/<NNN-feature>/evidence/<task-id>.md` so CI/reviewers and future sessions can audit the claim instead of relying only on chat history.
+
 ## Risk classification
 
 ### Low risk
@@ -83,7 +85,7 @@ The change is rejected if any of these occur:
 
 - production code without RED evidence for behavior changes;
 - failing build/tests/lint without documented owner-approved exception;
-- `project.pbxproj` or `.xcodeproj` edited directly;
+- `project.pbxproj` or `.xcodeproj` edited directly without a numbered ADR, explicit `ALLOW_XCODEPROJ_CHANGE=1`, and human review;
 - possible hardcoded secret;
 - dependency files changed without an ADR;
 - reviewer reports security concerns or logic errors;

@@ -61,9 +61,17 @@ else
 fi
 DIFF_FILES=$(printf '%s\n' "$DIFF_FILES" | sed '/^$/d' | sort -u || true)
 printf '%s\n' "$DIFF_FILES" | sed 's/^/  - /' || true
+ADR_TOUCHES=$(printf '%s\n' "$DIFF_FILES" | grep -E '^docs/decisions/[0-9]{4}-.+\.md$' || true)
 
-if printf '%s\n' "$DIFF_FILES" | grep -Eq '(^|/)project\.pbxproj$|\.xcodeproj/'; then
-  fail "Xcode project file changed. Use Xcode/buildable folders; do not edit project.pbxproj directly."
+XCODEPROJ_TOUCHES=$(printf '%s\n' "$DIFF_FILES" | grep -E '(^|/)project\.pbxproj$|\.xcodeproj/' || true)
+if [ -n "$XCODEPROJ_TOUCHES" ]; then
+  if [ "${ALLOW_XCODEPROJ_CHANGE:-0}" = "1" ] && [ -n "$ADR_TOUCHES" ]; then
+    warn "Xcode project files changed with explicit ALLOW_XCODEPROJ_CHANGE=1 and ADR coverage"
+    printf '%s\n' "$XCODEPROJ_TOUCHES" | sed 's/^/  xcode project file: /'
+  else
+    fail "Xcode project file changed. Default policy blocks direct .xcodeproj edits; if truly required, add a numbered ADR and rerun with ALLOW_XCODEPROJ_CHANGE=1 for human-reviewed changes."
+    printf '%s\n' "$XCODEPROJ_TOUCHES" | sed 's/^/  xcode project file: /'
+  fi
 else
   ok "no Xcode project file changes"
 fi
@@ -89,25 +97,48 @@ else
 fi
 
 section "Secret scan"
-SECRET_PATTERN="^\\+.*(api[_-]?key|secret|password|passwd|token|client[_-]?secret)[[:space:]]*[:=][[:space:]]*.{8,}"
+SECRET_PATTERN="(^\\+|^).*([[:<:]]api[_-]?key|[[:<:]]secret|[[:<:]]password|[[:<:]]passwd|[[:<:]]token|client[_-]?secret)[[:space:]]*[:=][[:space:]]*['\"]?[^'\"[:space:]]{8,}"
 SECRET_SCAN_FILE=$(mktemp "${TMPDIR:-/tmp}/verify-secret-scan.XXXXXX")
-trap 'rm -f "$SECRET_SCAN_FILE"' EXIT
-if [ -n "$BASE_REF" ]; then
-  git diff --unified=0 "$DIFF_RANGE" > "$SECRET_SCAN_FILE.diff"
+SECRET_DIFF_FILE=$(mktemp "${TMPDIR:-/tmp}/verify-secret-diff.XXXXXX")
+SECRET_UNTRACKED_FILE=$(mktemp "${TMPDIR:-/tmp}/verify-secret-untracked.XXXXXX")
+GITLEAKS_LOG=$(mktemp "${TMPDIR:-/tmp}/verify-gitleaks.XXXXXX")
+trap 'rm -f "$SECRET_SCAN_FILE" "$SECRET_DIFF_FILE" "$SECRET_UNTRACKED_FILE" "$GITLEAKS_LOG"' EXIT
+
+if command -v gitleaks >/dev/null 2>&1; then
+  if gitleaks dir . --redact --no-banner --exit-code 1 >"$GITLEAKS_LOG" 2>&1; then
+    ok "gitleaks secret scan"
+  else
+    fail "gitleaks found possible secrets"
+    sed -n '1,80p' "$GITLEAKS_LOG"
+  fi
 else
-  git diff --unified=0 HEAD > "$SECRET_SCAN_FILE.diff"
+  warn_or_fail "gitleaks not installed; using fallback regex secret scan"
 fi
-trap 'rm -f "$SECRET_SCAN_FILE" "$SECRET_SCAN_FILE.diff"' EXIT
-if grep -Ei "$SECRET_PATTERN" "$SECRET_SCAN_FILE.diff" > "$SECRET_SCAN_FILE" 2>/dev/null; then
-  fail "possible hardcoded secret in added lines"
-  sed -n '1,20p' "$SECRET_SCAN_FILE"
+
+if [ -n "$BASE_REF" ]; then
+  git diff --unified=0 "$DIFF_RANGE" > "$SECRET_DIFF_FILE"
 else
-  ok "no obvious hardcoded secrets in added lines"
+  git diff --unified=0 HEAD > "$SECRET_DIFF_FILE"
+fi
+
+# Fallback regex covers tracked/staged diff plus untracked text files, which git diff omits.
+: > "$SECRET_UNTRACKED_FILE"
+printf '%s\n' "$UNTRACKED_FILES" | sed '/^$/d' | while IFS= read -r f; do
+  if [ -f "$f" ] && file "$f" | grep -qi 'text'; then
+    sed "s|^|$f:|" "$f" >> "$SECRET_UNTRACKED_FILE"
+  fi
+done
+if { grep -Ei "$SECRET_PATTERN" "$SECRET_DIFF_FILE"; grep -Ei "$SECRET_PATTERN" "$SECRET_UNTRACKED_FILE"; } > "$SECRET_SCAN_FILE" 2>/dev/null; then
+  fail "possible hardcoded secret in added or untracked lines"
+  sed -n '1,30p' "$SECRET_SCAN_FILE"
+elif command -v gitleaks >/dev/null 2>&1; then
+  ok "fallback regex found no obvious hardcoded secrets"
+else
+  ok "no obvious hardcoded secrets in added or untracked lines"
 fi
 
 section "Dependency policy"
 PACKAGE_TOUCHES=$(printf '%s\n' "$DIFF_FILES" | grep -E '(^|/)Package\.swift$|(^|/)Package\.resolved$|\.xcodeproj/xcshareddata/swiftpm/' || true)
-ADR_TOUCHES=$(printf '%s\n' "$DIFF_FILES" | grep -E '^docs/decisions/[0-9]{4}-.+\.md$' || true)
 if [ -n "$PACKAGE_TOUCHES" ] && [ -z "$ADR_TOUCHES" ]; then
   fail "package/dependency files changed without a numbered ADR in docs/decisions/"
   printf '%s\n' "$PACKAGE_TOUCHES" | sed 's/^/  dependency file: /'

@@ -24,7 +24,7 @@ bash scripts/verify.sh
    - RED command and observed expected failure;
    - GREEN command and observed pass;
    - full-suite result.
-   If this evidence is missing, mark verification as incomplete.
+   If this evidence is missing, mark verification as incomplete. For medium/high-risk tasks, also check for `specs/<NNN-feature>/evidence/<task-id>.md`.
 5. Do not fix anything. If a command fails, report the exact failure and stop.
 
 ## Output format
