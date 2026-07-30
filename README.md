@@ -51,15 +51,18 @@ tu-proyecto/                      ← raíz del repo (al lado del .xcodeproj)
 │   ├── ai-code-trust-pipeline.md ← política de evidencia para código generado por IA
 │   ├── engineering-verification.md ← verificación independiente de fórmulas técnicas
 │   └── decisions/                ← ADRs (registro de decisiones)
-├── SourceTemplate/               ← layout sugerido para COPIAR dentro del target de Xcode
+├── SourceTemplate/               ← layout que ios-sdd init copia automáticamente al target
 │   ├── App/                      ← entry point, configuración global
 │   ├── Features/                 ← una carpeta por feature (View + Model + Tests)
 │   ├── Core/                     ← DesignSystem, Networking, Persistence, Extensions
 │   └── Resources/                ← assets, String Catalogs
 ├── Tests/ExampleFeatureTests.swift  ← ejemplo con Swift Testing (@Test, #expect)
+├── Brewfile                      ← herramientas CLI instalables con brew bundle
 ├── scripts/
+│   ├── ios-sdd                   ← CLI: init, verify, doctor, install
+│   ├── install.sh                ← instala ios-sdd en ~/.local/bin
 │   ├── bootstrap.sh              ← setup one-time de la Mac
-│   ├── new-project.sh            ← instancia este template en un proyecto Xcode nuevo
+│   ├── new-project.sh            ← wrapper legacy hacia ios-sdd init
 │   ├── verify.sh                 ← gate local/CI para confiar en código generado por IA
 │   └── install-git-hooks.sh      ← instala hooks locales de seguridad
 ├── .swiftformat / .swiftlint.yml ← estilo consistente (los hooks los corren solos)
@@ -111,9 +114,25 @@ se cambia el spec primero.
 
 ---
 
-## Cómo arrancar un proyecto nuevo (el flujo completo)
+## Cómo arrancar un proyecto nuevo (flujo simple)
 
-> Prerequisito: haber corrido `scripts/bootstrap.sh` una vez en tu Mac (ver `SETUP.md`).
+> Prerequisito recomendado: haber corrido `scripts/bootstrap.sh` una vez en tu Mac (ver `SETUP.md`).
+> Ese bootstrap instala herramientas como SwiftLint, SwiftFormat, xcbeautify, Spec Kit, Claude Code
+> y el comando global `ios-sdd`.
+
+### One-time install del template
+
+```bash
+mkdir -p ~/Developer/Templates
+cd ~/Developer/Templates
+git clone https://github.com/luispablosegovia/ios-sdd-template.git
+cd ios-sdd-template
+bash scripts/bootstrap.sh
+# o, si ya tenés las herramientas y solo querés el comando:
+bash scripts/install.sh
+```
+
+### Crear una app nueva
 
 ```bash
 # 1. Creá el proyecto en Xcode
@@ -122,18 +141,19 @@ se cambia el spec primero.
 #    Storage: SwiftData (si tu app persiste datos)
 #    Guardalo en ~/Developer/MiApp
 
-# 2. Instanciá el template adentro
+# 2. Entrá a la carpeta del proyecto y aplicá el template
 cd ~/Developer/MiApp
-/ruta/al/template/scripts/new-project.sh . MiApp
+ios-sdd init
 
-# 3. Inicializá Spec Kit para Claude Code
-specify init . --force --integration claude
+# 3. Si querés re-correr la verificación después
+ios-sdd verify
 
 # 4. Abrí Claude Code con el pipeline de modelos
-claude --model opusplan        # Opus planifica, Sonnet ejecuta
+claude --model opusplan
 
 # 5. Adentro de Claude Code, el ciclo SDD por cada feature:
-/speckit.constitution          # solo la primera vez: revisá/ajustá la constitución
+/speckit.constitution          # comando de Spec Kit cuando está disponible
+/constitution                  # alias local: revisa .specify/memory/constitution.md
 /speckit.specify Quiero una pantalla de onboarding con 3 pasos y...
 /speckit.clarify               # Opus te hace las preguntas que faltan
 /speckit.plan                  # plan técnico (frameworks, arquitectura)
@@ -150,13 +170,46 @@ claude --model opusplan        # Opus planifica, Sonnet ejecuta
 # 8. Si todo está verde, commit chico y repetís /implement-next para T002
 ```
 
+### Qué automatiza `ios-sdd init`
+
+`ios-sdd init` detecta el `.xcodeproj`, deduce el nombre de la app y automatiza lo que antes era manual:
+
+- inicializa git si el proyecto todavía no tiene repo;
+- corre `specify init . --force --integration claude` cuando `specify` está instalado;
+- instala `.specify/`, `.claude/`, `CLAUDE.md`, `AGENTS.md`, `docs/`, `specs/`, scripts y configs;
+- reemplaza `__APP_NAME__` por el nombre real del proyecto;
+- copia `SourceTemplate/` automáticamente dentro de la carpeta del target de Xcode;
+- copia `Tests/ExampleFeatureTests.swift` dentro del target de tests si existe;
+- instala git hooks locales;
+- corre `ios-sdd verify` al final, salvo que uses `--skip-verify`.
+
+Comandos útiles:
+
+```bash
+ios-sdd doctor              # chequea herramientas, .specify, comandos Claude y proyecto
+ios-sdd init --skip-verify  # instala sin correr xcodebuild/lint al final
+ios-sdd init --app-name MiApp
+ios-sdd verify --scheme MiApp
+```
+
+### Nota sobre constitución y nombres parecidos
+
+La fuente de verdad del proyecto es siempre:
+
+```text
+.specify/memory/constitution.md
+```
+
+`/speckit.constitution` es el comando slash de Spec Kit cuando está disponible.
+`/speckit-constitution` y `/constitution` son aliases locales incluidos por el template para revisar la misma constitución sin confundirla con una skill externa.
+
 ### El layout de código fuente
 
-Copiá el contenido de `SourceTemplate/` **adentro de la carpeta del target** que creó Xcode
-(la que tiene el mismo nombre que tu app). Desde Xcode 16 los proyectos nuevos usan
-*buildable folders* (carpetas sincronizadas): todo archivo que aparezca en el disco aparece
-en Xcode automáticamente, sin tocar el `.pbxproj`. Eso es clave para que los agentes puedan
-crear archivos sin romper nada.
+`ios-sdd init` copia el contenido de `SourceTemplate/` **adentro de la carpeta del target**
+que creó Xcode (la que tiene el mismo nombre que tu app). Desde Xcode 16 los proyectos
+nuevos usan *buildable folders* (carpetas sincronizadas): todo archivo que aparezca en el
+disco aparece en Xcode automáticamente, sin tocar el `.pbxproj`. Eso es clave para que los
+agentes puedan crear archivos sin romper nada.
 
 ```
 MiApp/                        ← carpeta del target

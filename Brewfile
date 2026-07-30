@@ -1,0 +1,7 @@
+brew "swiftformat"
+brew "swiftlint"
+brew "xcbeautify"
+brew "jq"
+brew "gh"
+brew "node"
+brew "uv"
