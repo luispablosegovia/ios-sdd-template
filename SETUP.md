@@ -2,7 +2,7 @@
 
 Guía para tu MacBook Pro M5 (24 GB / 1 TB). Tiempo estimado: 40–60 min
 (la mayoría es descarga de Xcode). Al final tenés todo listo para crear
-proyectos con `scripts/new-project.sh`.
+proyectos con `ios-sdd init` después de crear una app en Xcode.
 
 > Atajo: los pasos 2 a 6 los automatiza `scripts/bootstrap.sh`.
 > Igual leé esta guía una vez para entender qué instala cada cosa.
@@ -45,7 +45,8 @@ brew --version
 ## Paso 3 — Herramientas de línea de comandos
 
 ```bash
-brew install swiftformat swiftlint xcbeautify jq gh node uv gitleaks
+brew bundle --file Brewfile
+# equivalente manual: brew install swiftformat swiftlint xcbeautify jq gh node uv gitleaks
 ```
 
 Qué es cada una:
@@ -110,7 +111,21 @@ Swift Concurrency y Swift Testing que elevan mucho la calidad del código genera
 Buscá el repo **"Swift Agent Skills"** en hackingwithswift.com y seguí las
 instrucciones de instalación (elegí instalación global + symlink cuando pregunte).
 
-## Paso 8 — Git configurado
+## Paso 8 — Instalar el comando `ios-sdd`
+
+```bash
+bash scripts/install.sh
+which ios-sdd
+ios-sdd help
+```
+
+Si `which ios-sdd` no encuentra el comando, agregá `~/.local/bin` a tu PATH:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+## Paso 9 — Git configurado
 
 ```bash
 git config --global user.name "Tu Nombre"

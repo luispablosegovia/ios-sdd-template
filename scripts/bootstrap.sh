@@ -41,6 +41,12 @@ else
 fi
 
 # ── 3. Herramientas CLI ─────────────────────────────────────────────────────
+TEMPLATE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [ -f "$TEMPLATE_DIR/Brewfile" ]; then
+  echo "→ Instalando herramientas desde Brewfile..."
+  brew bundle --file "$TEMPLATE_DIR/Brewfile" || warn "brew bundle tuvo errores; sigo con chequeo individual"
+fi
+
 TOOLS=(swiftformat swiftlint xcbeautify jq gh node uv gitleaks)
 for t in "${TOOLS[@]}"; do
   if command -v "$t" >/dev/null 2>&1; then
@@ -50,6 +56,17 @@ for t in "${TOOLS[@]}"; do
     brew install "$t" && ok "$t instalado" || fail "No pude instalar $t"
   fi
 done
+
+# ── 3b. CLI ios-sdd ─────────────────────────────────────────────────────────
+if [ -f "$TEMPLATE_DIR/scripts/install.sh" ]; then
+  bash "$TEMPLATE_DIR/scripts/install.sh" || warn "No pude instalar ios-sdd en ~/.local/bin"
+fi
+
+if command -v ios-sdd >/dev/null 2>&1; then
+  ok "ios-sdd"
+else
+  warn "ios-sdd no está en PATH; agregá ~/.local/bin a tu PATH"
+fi
 
 # ── 4. Claude Code ──────────────────────────────────────────────────────────
 if command -v claude >/dev/null 2>&1; then
